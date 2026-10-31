@@ -1,0 +1,196 @@
+<div id="claims-data-flow-v1">
+  <style>
+    #claims-data-flow-v1 {
+      color: var(--foreground);
+      font-family: inherit;
+    }
+    #claims-data-flow-v1 .flow-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    #claims-data-flow-v1 .flow {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
+    #claims-data-flow-v1 .node {
+      padding: 12px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--viz-series-1) 10%, transparent);
+      min-width: 0;
+      transition: border-color 160ms ease, background 160ms ease, opacity 160ms ease;
+    }
+    #claims-data-flow-v1 .node[data-kind="decision"] {
+      background: color-mix(in srgb, var(--viz-series-2) 10%, transparent);
+    }
+    #claims-data-flow-v1 .node[data-kind="result"] {
+      background: color-mix(in srgb, var(--viz-series-3) 10%, transparent);
+    }
+    #claims-data-flow-v1 .node.is-active {
+      border-color: var(--foreground);
+      background: color-mix(in srgb, var(--viz-series-1) 18%, transparent);
+    }
+    #claims-data-flow-v1 .node[data-kind="decision"].is-active {
+      background: color-mix(in srgb, var(--viz-series-2) 18%, transparent);
+    }
+    #claims-data-flow-v1 .node[data-kind="result"].is-active {
+      background: color-mix(in srgb, var(--viz-series-3) 18%, transparent);
+    }
+    #claims-data-flow-v1 .node-title {
+      font-weight: 500;
+      overflow-wrap: anywhere;
+    }
+    #claims-data-flow-v1 .node-detail {
+      color: var(--muted-foreground);
+      margin-top: 4px;
+      overflow-wrap: anywhere;
+    }
+    #claims-data-flow-v1 .arrow {
+      text-align: center;
+      color: var(--muted-foreground);
+      font-size: 20px;
+    }
+    #claims-data-flow-v1 .down {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--muted-foreground);
+      font-size: 20px;
+      line-height: 1;
+    }
+    #claims-data-flow-v1 .wide-node {
+      grid-column: 1 / -1;
+    }
+    #claims-data-flow-v1 .status {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      min-height: 42px;
+    }
+    #claims-data-flow-v1 .status strong {
+      font-weight: 500;
+    }
+    @media (max-width: 520px) {
+      #claims-data-flow-v1 .flow {
+        grid-template-columns: 1fr;
+      }
+      #claims-data-flow-v1 .arrow {
+        transform: rotate(90deg);
+      }
+      #claims-data-flow-v1 .wide-node,
+      #claims-data-flow-v1 .down {
+        grid-column: 1;
+      }
+    }
+  </style>
+
+  <h2>How the claims data connects</h2>
+
+  <div class="flow-controls" aria-label="Diagram steps">
+    <button class="btn btn-primary" type="button" data-step="0" aria-pressed="true">1 · Load files</button>
+    <button class="btn" type="button" data-step="1" aria-pressed="false">2 · Build labels</button>
+    <button class="btn" type="button" data-step="2" aria-pressed="false">3 · Match by ID</button>
+    <button class="btn" type="button" data-step="3" aria-pressed="false">4 · Check answer</button>
+  </div>
+
+  <div class="flow" role="img" aria-label="Claims are loaded from one file and handler decisions from another. Decisions are converted to a labels dictionary keyed by claim ID. A claim ID retrieves its matching label, which is compared with the AI answer.">
+    <div class="node is-active" data-node-step="0">
+      <div class="node-title"><code>claims.json</code></div>
+      <div class="node-detail">Claim facts: ID, type, story, amount, items</div>
+    </div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="node is-active" data-kind="decision" data-node-step="0">
+      <div class="node-title"><code>evals/decisions.json</code></div>
+      <div class="node-detail">Human result: decision, payout, difficulty, reason</div>
+    </div>
+
+    <div class="down" aria-hidden="true">↓</div>
+
+    <div class="node" data-node-step="1">
+      <div class="node-title"><code>claims</code> list</div>
+      <div class="node-detail"><code>[claim, claim, claim, ...]</code></div>
+    </div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="node" data-kind="decision" data-node-step="1">
+      <div class="node-title"><code>labels</code> dictionary</div>
+      <div class="node-detail"><code>{"CLM-1001": decision, ...}</code></div>
+    </div>
+
+    <div class="down" aria-hidden="true">↓</div>
+
+    <div class="node" data-node-step="2">
+      <div class="node-title">Current claim</div>
+      <div class="node-detail"><code>claim["claim_id"] → "CLM-1001"</code></div>
+    </div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="node" data-kind="decision" data-node-step="2">
+      <div class="node-title">Matching correct label</div>
+      <div class="node-detail"><code>labels["CLM-1001"]</code></div>
+    </div>
+
+    <div class="down" aria-hidden="true">↓</div>
+
+    <div class="node wide-node" data-kind="result" data-node-step="3">
+      <div class="node-title"><code>is_right(answer, label)</code></div>
+      <div class="node-detail">Same decision + payout difference ≤ $1 → <code>True</code>; otherwise → <code>False</code></div>
+    </div>
+  </div>
+
+  <div class="status" aria-live="polite">
+    <strong data-status-title>Load files:</strong>
+    <span data-status-text>claim facts and human decisions start in separate JSON files.</span>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.getElementById('claims-data-flow-v1');
+      if (!root) return;
+
+      const steps = [
+        ['Load files:', 'claim facts and human decisions start in separate JSON files.'],
+        ['Build labels:', 'the decisions list becomes a dictionary where each claim ID is a key.'],
+        ['Match by ID:', 'the current claim ID retrieves exactly one corresponding human decision.'],
+        ['Check answer:', 'the AI decision and payout are compared with the matching human label.']
+      ];
+
+      const buttons = [...root.querySelectorAll('[data-step]')];
+      const nodes = [...root.querySelectorAll('[data-node-step]')];
+      const statusTitle = root.querySelector('[data-status-title]');
+      const statusText = root.querySelector('[data-status-text]');
+
+      function showStep(index, save = true) {
+        buttons.forEach((button) => {
+          const active = Number(button.dataset.step) === index;
+          button.classList.toggle('btn-primary', active);
+          button.setAttribute('aria-pressed', String(active));
+        });
+        nodes.forEach((node) => {
+          node.classList.toggle('is-active', Number(node.dataset.nodeStep) === index);
+        });
+        statusTitle.textContent = steps[index][0];
+        statusText.textContent = steps[index][1];
+        if (save && window.openai?.setWidgetState) {
+          window.openai.setWidgetState({
+            modelContent: { selectedStep: index },
+            privateContent: null
+          }).catch(() => {});
+        }
+      }
+
+      buttons.forEach((button) => {
+        button.addEventListener('click', () => showStep(Number(button.dataset.step)));
+      });
+
+      const savedStep = window.openai?.widgetState?.modelContent?.selectedStep;
+      showStep(Number.isInteger(savedStep) && savedStep >= 0 && savedStep < steps.length ? savedStep : 0, false);
+
+      window.addEventListener('openai:set_globals', (event) => {
+        const next = event.detail?.globals?.widgetState?.modelContent?.selectedStep;
+        if (Number.isInteger(next) && next >= 0 && next < steps.length) showStep(next, false);
+      });
+    })();
+  </script>
+</div>

@@ -1,0 +1,1 @@
+/Users/amiitdeshmukh/VSCode/Udemy/llm_engineering/.venv
